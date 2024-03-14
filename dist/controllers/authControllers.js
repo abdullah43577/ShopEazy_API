@@ -40,14 +40,51 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = exports.updateProfile = exports.register = exports.test = void 0;
-var UserModel_1 = __importDefault(require("../model/UserModel"));
+var user_model_1 = __importDefault(require("../model/user.model"));
 var generateToken_1 = require("../utils/generateToken");
 var hashPassword_1 = require("../utils/hashPassword");
 var mongoose_1 = require("mongoose");
+require("dotenv/config");
+var API_URL = process.env.API_URL;
+var axios_1 = __importDefault(require("axios"));
+var products_model_1 = __importDefault(require("../model/products.model"));
 var test = function (req, res) {
     res.status(200).json({ message: 'Endpoint working successfully!' });
 };
 exports.test = test;
+var populateProducts = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var data, _i, data_1, product, productInstance, error_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 6, , 7]);
+                return [4 /*yield*/, axios_1.default.get(API_URL)];
+            case 1:
+                data = (_a.sent()).data;
+                _i = 0, data_1 = data;
+                _a.label = 2;
+            case 2:
+                if (!(_i < data_1.length)) return [3 /*break*/, 5];
+                product = data_1[_i];
+                productInstance = new products_model_1.default(product);
+                return [4 /*yield*/, productInstance.save()];
+            case 3:
+                _a.sent();
+                _a.label = 4;
+            case 4:
+                _i++;
+                return [3 /*break*/, 2];
+            case 5:
+                res.sendStatus(200);
+                return [3 /*break*/, 7];
+            case 6:
+                error_1 = _a.sent();
+                res.sendStatus(404);
+                return [3 /*break*/, 7];
+            case 7: return [2 /*return*/];
+        }
+    });
+}); };
 var register = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var _a, name, email, password, existingUser, hashedPassword, newUser, token, err_1;
     return __generator(this, function (_b) {
@@ -57,20 +94,20 @@ var register = function (req, res) { return __awaiter(void 0, void 0, void 0, fu
                 _a = req.body, name = _a.name, email = _a.email, password = _a.password;
                 if (!name || !email || !password)
                     return [2 /*return*/, res.status(400).json({ message: 'All fields are required!' })];
-                return [4 /*yield*/, UserModel_1.default.findOne({ email: email })];
+                return [4 /*yield*/, user_model_1.default.findOne({ email: email })];
             case 1:
                 existingUser = _b.sent();
                 if (existingUser)
-                    return [2 /*return*/, res.status(400).json({ message: 'email already exists!' })];
+                    return [2 /*return*/, res.status(400).json({ message: 'user with email already exists!' })];
                 return [4 /*yield*/, (0, hashPassword_1.hashPassword)(password)];
             case 2:
                 hashedPassword = _b.sent();
-                return [4 /*yield*/, UserModel_1.default.create({ name: name, email: email, password: hashedPassword })];
+                return [4 /*yield*/, user_model_1.default.create({ name: name, email: email, password: hashedPassword })];
             case 3:
                 newUser = _b.sent();
                 token = (0, generateToken_1.generatetoken)(newUser._id.toString());
                 res.cookie('shopEazyJWT', token, { httpOnly: true, secure: true, maxAge: 3600000 });
-                res.status(201).json({ message: 'User successfully created!', newUser: newUser });
+                res.status(201).json({ message: 'Account Registration Successfull!', newUser: newUser });
                 return [3 /*break*/, 5];
             case 4:
                 err_1 = _b.sent();
@@ -82,24 +119,24 @@ var register = function (req, res) { return __awaiter(void 0, void 0, void 0, fu
 }); };
 exports.register = register;
 var updateProfile = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, username, phone, id, isValidUser, user, err_2;
+    var _a, username, phone, profileImg, id, isValidUser, user, err_2;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
                 _b.trys.push([0, 3, , 4]);
-                _a = req.body, username = _a.username, phone = _a.phone;
+                _a = req.body, username = _a.username, phone = _a.phone, profileImg = _a.profileImg;
                 id = req.params.id;
-                return [4 /*yield*/, UserModel_1.default.findById(id)];
+                return [4 /*yield*/, user_model_1.default.findById(id)];
             case 1:
                 isValidUser = _b.sent();
                 if (!isValidUser || !(0, mongoose_1.isValidObjectId)(id))
                     return [2 /*return*/, res.status(400).json({ message: 'User does not exist!' })];
-                return [4 /*yield*/, UserModel_1.default.findByIdAndUpdate(id, { username: username, phone: phone }, { new: true })];
+                return [4 /*yield*/, user_model_1.default.findByIdAndUpdate(id, { username: username, phone: phone, profileImg: profileImg }, { new: true })];
             case 2:
                 user = _b.sent();
                 if (!user)
                     return [2 /*return*/, res.status(400).json({ message: 'User does not exist!' })];
-                return [2 /*return*/, res.status(200).json({ message: 'User successfully updated!', user: user })];
+                return [2 /*return*/, res.status(200).json({ message: 'User profile updated successfully!', user: user })];
             case 3:
                 err_2 = _b.sent();
                 res.status(500).json({ message: 'Internal server error!', err: err_2.message });
@@ -118,7 +155,7 @@ var login = function (req, res) { return __awaiter(void 0, void 0, void 0, funct
                 _a = req.body, username = _a.username, password = _a.password;
                 if (!username || !password)
                     return [2 /*return*/, res.status(400).json({ message: 'All fields are required!' })];
-                return [4 /*yield*/, UserModel_1.default.findOne({ username: username })];
+                return [4 /*yield*/, user_model_1.default.findOne({ username: username })];
             case 1:
                 user = _b.sent();
                 if (!user)
@@ -127,10 +164,10 @@ var login = function (req, res) { return __awaiter(void 0, void 0, void 0, funct
             case 2:
                 passwordMatch = _b.sent();
                 if (!passwordMatch)
-                    return [2 /*return*/, res.status(400).json({ message: 'Invalid username or password!' })];
+                    return [2 /*return*/, res.status(400).json({ message: 'invalid username or password!' })];
                 token = (0, generateToken_1.generatetoken)(user._id.toString());
                 res.cookie('shopEazyJWT', token, { httpOnly: true, secure: true, maxAge: 3600000 });
-                res.status(200).json({ message: 'User successfully logged in!', user: user });
+                res.status(200).json({ message: 'User log in successfull!', user: user });
                 return [3 /*break*/, 4];
             case 3:
                 err_3 = _b.sent();

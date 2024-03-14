@@ -30,6 +30,18 @@ var userSchema = new mongoose_1.Schema({
     profileImg: {
         type: String,
     },
+    wishlists: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'Wishlist',
+        },
+    ],
+    cartItems: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'CartItem',
+        },
+    ],
 });
-var User = (0, mongoose_1.model)('user', userSchema);
+var User = (0, mongoose_1.model)('User', userSchema);
 exports.default = User;
