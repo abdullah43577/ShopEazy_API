@@ -18,7 +18,8 @@ app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: false }));
 app.use((0, cors_1.default)({
     methods: ['GET', 'POST', 'UPDATE', 'DELETE'],
-    origin: '*',
+    origin: 'http://localhost:3000',
+    credentials: true, // Allow credentials (cookies) to be sent
 }));
 app.use((0, cookie_parser_1.default)());
 app.listen(PORT, function () {
