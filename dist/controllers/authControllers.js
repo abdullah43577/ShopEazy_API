@@ -60,6 +60,7 @@ var STORE_API = process.env.STORE_API;
 var axios_1 = __importDefault(require("axios"));
 var products_model_1 = __importDefault(require("../model/products.model"));
 var sendMail_1 = require("../utils/sendMail");
+var validator_1 = __importDefault(require("validator"));
 var test = function (req, res) {
     res.status(200).json({ message: 'Endpoint working successfully!' });
 };
@@ -163,7 +164,7 @@ var login = function (req, res) { return __awaiter(void 0, void 0, void 0, funct
                 if (!usernameOrEmail || !password)
                     return [2 /*return*/, res.status(400).json({ message: 'Username or email and password are required!' })];
                 user = void 0;
-                if (!usernameOrEmail.includes('@')) return [3 /*break*/, 2];
+                if (!validator_1.default.isEmail(usernameOrEmail)) return [3 /*break*/, 2];
                 return [4 /*yield*/, user_model_1.default.findOne({ email: usernameOrEmail })];
             case 1:
                 // check if username is provided
@@ -205,7 +206,7 @@ var forgotPassword = function (req, res) { return __awaiter(void 0, void 0, void
                 if (!usernameOrEmail)
                     return [2 /*return*/, res.sendStatus(404)];
                 user = void 0;
-                if (!usernameOrEmail.includes('@')) return [3 /*break*/, 2];
+                if (!validator_1.default.isEmail(usernameOrEmail)) return [3 /*break*/, 2];
                 return [4 /*yield*/, user_model_1.default.findOne({ email: usernameOrEmail })];
             case 1:
                 user = _a.sent();

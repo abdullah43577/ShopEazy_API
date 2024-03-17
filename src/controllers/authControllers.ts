@@ -8,6 +8,7 @@ const { STORE_API } = process.env;
 import axios from 'axios';
 import Product from '../model/products.model';
 import { sendMail } from '../utils/sendMail';
+import validator from 'validator';
 
 const test = (req: Request, res: Response) => {
   res.status(200).json({ message: 'Endpoint working successfully!' });
@@ -86,7 +87,7 @@ const login = async (req: Request, res: Response) => {
 
     let user;
 
-    if (usernameOrEmail.includes('@')) {
+    if (validator.isEmail(usernameOrEmail)) {
       // check if username is provided
       user = await User.findOne({ email: usernameOrEmail });
     } else {
@@ -117,7 +118,7 @@ const forgotPassword = async (req: Request, res: Response) => {
 
     let user;
 
-    if (usernameOrEmail.includes('@')) {
+    if (validator.isEmail(usernameOrEmail)) {
       user = await User.findOne({ email: usernameOrEmail });
     } else {
       user = await User.findOne({ username: usernameOrEmail });

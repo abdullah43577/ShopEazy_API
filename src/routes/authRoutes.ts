@@ -9,7 +9,7 @@ authRoutes.post('/register', register);
 authRoutes.post('/login', login);
 authRoutes.post('/update-profile', validateToken, updateProfile);
 authRoutes.post('/upload', populateProducts);
-authRoutes.post('/forgot-password', validateToken, forgotPassword);
-authRoutes.post('/reset-password', validateToken, resetPassword);
+authRoutes.post('/forgot-password/:id', validateToken, forgotPassword);
+authRoutes.post('/reset-password/:resetToken', validateToken, resetPassword);
 
 export default authRoutes;

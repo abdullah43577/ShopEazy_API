@@ -9,6 +9,6 @@ authRoutes.post('/register', authControllers_1.register);
 authRoutes.post('/login', authControllers_1.login);
 authRoutes.post('/update-profile', validateToken_1.validateToken, authControllers_1.updateProfile);
 authRoutes.post('/upload', authControllers_1.populateProducts);
-authRoutes.post('/forgot-password', validateToken_1.validateToken, authControllers_1.forgotPassword);
-authRoutes.post('/reset-password', validateToken_1.validateToken, authControllers_1.resetPassword);
+authRoutes.post('/forgot-password/:id', validateToken_1.validateToken, authControllers_1.forgotPassword);
+authRoutes.post('/reset-password/:resetToken', validateToken_1.validateToken, authControllers_1.resetPassword);
 exports.default = authRoutes;
