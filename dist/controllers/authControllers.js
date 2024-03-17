@@ -50,7 +50,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.forgotPassword = exports.populateProducts = exports.login = exports.updateProfile = exports.register = exports.test = void 0;
+exports.resetPassword = exports.forgotPassword = exports.populateProducts = exports.login = exports.updateProfile = exports.register = exports.test = void 0;
 var user_model_1 = __importDefault(require("../model/user.model"));
 var generateToken_1 = require("../utils/generateToken");
 var hashPassword_1 = require("../utils/hashPassword");
@@ -59,6 +59,7 @@ require("dotenv/config");
 var STORE_API = process.env.STORE_API;
 var axios_1 = __importDefault(require("axios"));
 var products_model_1 = __importDefault(require("../model/products.model"));
+var sendMail_1 = require("../utils/sendMail");
 var test = function (req, res) {
     res.status(200).json({ message: 'Endpoint working successfully!' });
 };
@@ -122,23 +123,26 @@ var register = function (req, res) { return __awaiter(void 0, void 0, void 0, fu
 }); };
 exports.register = register;
 var updateProfile = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, username, phone, profileImg, id, isValidUser, user, err_2;
+    var _a, username, phone, profileImg, id, user, err_2;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
                 _b.trys.push([0, 3, , 4]);
                 _a = req.body, username = _a.username, phone = _a.phone, profileImg = _a.profileImg;
                 id = req.params.id;
+                if (!username || !phone || !profileImg || !id)
+                    return [2 /*return*/, res.status(400).json({ message: 'Missing property values for one or more dataset which may or may not include the ID property' })];
                 return [4 /*yield*/, user_model_1.default.findById(id)];
             case 1:
-                isValidUser = _b.sent();
-                if (!isValidUser || !(0, mongoose_1.isValidObjectId)(id))
-                    return [2 /*return*/, res.status(400).json({ message: 'User does not exist!' })];
-                return [4 /*yield*/, user_model_1.default.findByIdAndUpdate(id, { username: username, phone: phone, profileImg: profileImg }, { new: true })];
-            case 2:
                 user = _b.sent();
-                if (!user)
-                    return [2 /*return*/, res.status(400).json({ message: 'User does not exist!' })];
+                if (!user || !(0, mongoose_1.isValidObjectId)(id))
+                    return [2 /*return*/, res.status(400).json({ message: 'Invalid User ID!' })];
+                user.username = username;
+                user.phone = phone;
+                user.profileImg = profileImg;
+                return [4 /*yield*/, user.save()];
+            case 2:
+                _b.sent();
                 return [2 /*return*/, res.status(200).json({ message: 'User profile updated successfully!', user: user })];
             case 3:
                 err_2 = _b.sent();
@@ -192,11 +196,11 @@ var login = function (req, res) { return __awaiter(void 0, void 0, void 0, funct
 }); };
 exports.login = login;
 var forgotPassword = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var usernameOrEmail, user, resetToken, tokenExpiration, err_4;
+    var usernameOrEmail, user, resetToken, tokenExpiration, emailSent, err_4;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 6, , 7]);
+                _a.trys.push([0, 7, , 8]);
                 usernameOrEmail = req.body.usernameOrEmail;
                 if (!usernameOrEmail)
                     return [2 /*return*/, res.sendStatus(404)];
@@ -220,28 +224,61 @@ var forgotPassword = function (req, res) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, user.save()];
             case 5:
                 _a.sent();
-                res.status(200).json({ message: 'Password reset token generated and sent to the User!' });
-                return [3 /*break*/, 7];
+                return [4 /*yield*/, (0, sendMail_1.sendMail)({ name: user.name, email: user.email, resetToken: resetToken })];
             case 6:
+                emailSent = _a.sent();
+                if (emailSent) {
+                    res.status(200).json({ message: 'Password reset token generated and sent to the user!' });
+                }
+                else {
+                    res.status(500).json({ message: 'Failed to send password reset email. Please try again later.' });
+                }
+                return [3 /*break*/, 8];
+            case 7:
                 err_4 = _a.sent();
                 res.status(404).json({ message: 'An Error Occurred!!', error: err_4.message });
-                return [3 /*break*/, 7];
-            case 7: return [2 /*return*/];
+                return [3 /*break*/, 8];
+            case 8: return [2 /*return*/];
         }
     });
 }); };
 exports.forgotPassword = forgotPassword;
 var resetPassword = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var newPassword;
-    return __generator(this, function (_a) {
-        try {
-            newPassword = req.body.newPassword;
-            if (!newPassword)
-                return [2 /*return*/, res.status(400).json({ message: 'New password is required!' })];
+    var resetToken, _a, email, newPassword, user, _b, err_5;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
+            case 0:
+                _c.trys.push([0, 4, , 5]);
+                resetToken = req.params.resetToken;
+                _a = req.body, email = _a.email, newPassword = _a.newPassword;
+                if (!resetToken || !email || !newPassword)
+                    return [2 /*return*/, res.status(400).json({ message: 'Invalid request. Reset token, email, and new password are required.' })];
+                return [4 /*yield*/, user_model_1.default.findOne({ email: email })];
+            case 1:
+                user = _c.sent();
+                if (!user)
+                    return [2 /*return*/, res.status(404).json({ message: 'User not found!' })];
+                if (user.resetToken !== resetToken)
+                    return [2 /*return*/, res.status(400).json({ message: 'Invalid reset token!' })];
+                if (!user.resetTokenExpires || user.resetTokenExpires < new Date(Date.now()))
+                    return [2 /*return*/, res.status(400).json({ message: 'Reset token has expired!' })];
+                _b = user;
+                return [4 /*yield*/, (0, hashPassword_1.hashPassword)(newPassword)];
+            case 2:
+                _b.password = _c.sent();
+                user.resetToken = undefined;
+                user.resetTokenExpires = undefined;
+                return [4 /*yield*/, user.save()];
+            case 3:
+                _c.sent();
+                res.status(200).json({ message: 'Password reset successful!' });
+                return [3 /*break*/, 5];
+            case 4:
+                err_5 = _c.sent();
+                res.status(404).json({ message: 'Error resetting password', error: err_5.message });
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
         }
-        catch (err) {
-            res.status(404).json({ messag: 'Error resetting password', error: err.message });
-        }
-        return [2 /*return*/];
     });
 }); };
+exports.resetPassword = resetPassword;

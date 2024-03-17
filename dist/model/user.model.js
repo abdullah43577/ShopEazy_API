@@ -57,11 +57,9 @@ var userSchema = new mongoose_1.Schema({
     ],
     resetToken: {
         type: String,
-        default: null,
     },
     resetTokenExpires: {
         type: Date,
-        default: null,
     },
 });
 var User = (0, mongoose_1.model)('user', userSchema);

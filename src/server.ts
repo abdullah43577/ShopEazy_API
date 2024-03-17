@@ -4,6 +4,7 @@ import morgan from 'morgan';
 const { PORT } = process.env || 4000;
 import { connectDB } from './utils/connectDB';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes';
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(
     origin: '*',
   })
 );
+app.use(cookieParser());
 
 app.listen(PORT, () => {
   connectDB();

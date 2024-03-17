@@ -7,6 +7,7 @@ import 'dotenv/config';
 const { STORE_API } = process.env;
 import axios from 'axios';
 import Product from '../model/products.model';
+import { sendMail } from '../utils/sendMail';
 
 const test = (req: Request, res: Response) => {
   res.status(200).json({ message: 'Endpoint working successfully!' });
@@ -59,13 +60,16 @@ const updateProfile = async (req: Request, res: Response) => {
     const { username, phone, profileImg } = req.body;
     const { id } = req.params;
 
-    const isValidUser = await User.findById(id);
+    if (!username || !phone || !profileImg || !id) return res.status(400).json({ message: 'Missing property values for one or more dataset which may or may not include the ID property' });
 
-    if (!isValidUser || !isValidObjectId(id)) return res.status(400).json({ message: 'User does not exist!' });
+    const user = await User.findById(id);
 
-    const user = await User.findByIdAndUpdate(id, { username, phone, profileImg }, { new: true });
+    if (!user || !isValidObjectId(id)) return res.status(400).json({ message: 'Invalid User ID!' });
 
-    if (!user) return res.status(400).json({ message: 'User does not exist!' });
+    user.username = username;
+    user.phone = phone;
+    user.profileImg = profileImg;
+    await user.save();
 
     return res.status(200).json({ message: 'User profile updated successfully!', user });
   } catch (err) {
@@ -128,7 +132,14 @@ const forgotPassword = async (req: Request, res: Response) => {
     user.resetTokenExpires = tokenExpiration;
     await user.save();
 
-    res.status(200).json({ message: 'Password reset token generated and sent to the User!' });
+    // send mail to user
+    const emailSent = await sendMail({ name: user.name, email: user.email, resetToken });
+
+    if (emailSent) {
+      res.status(200).json({ message: 'Password reset token generated and sent to the user!' });
+    } else {
+      res.status(500).json({ message: 'Failed to send password reset email. Please try again later.' });
+    }
   } catch (err) {
     res.status(404).json({ message: 'An Error Occurred!!', error: (err as Error).message });
   }
@@ -136,11 +147,28 @@ const forgotPassword = async (req: Request, res: Response) => {
 
 const resetPassword = async (req: Request, res: Response) => {
   try {
-    const { newPassword } = req.body;
-    if (!newPassword) return res.status(400).json({ message: 'New password is required!' });
+    const { resetToken } = req.params;
+    const { email, newPassword } = req.body;
+
+    if (!resetToken || !email || !newPassword) return res.status(400).json({ message: 'Invalid request. Reset token, email, and new password are required.' });
+
+    const user = await User.findOne({ email });
+
+    if (!user) return res.status(404).json({ message: 'User not found!' });
+
+    if (user.resetToken !== resetToken) return res.status(400).json({ message: 'Invalid reset token!' });
+
+    if (!user.resetTokenExpires || user.resetTokenExpires < new Date(Date.now())) return res.status(400).json({ message: 'Reset token has expired!' });
+
+    user.password = await hashPassword(newPassword);
+    user.resetToken = undefined;
+    user.resetTokenExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successful!' });
   } catch (err) {
-    res.status(404).json({ messag: 'Error resetting password', error: (err as Error).message });
+    res.status(404).json({ message: 'Error resetting password', error: (err as Error).message });
   }
 };
 
-export { test, register, updateProfile, login, populateProducts, forgotPassword };
+export { test, register, updateProfile, login, populateProducts, forgotPassword, resetPassword };

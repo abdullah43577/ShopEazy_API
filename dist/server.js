@@ -9,6 +9,7 @@ var morgan_1 = __importDefault(require("morgan"));
 var PORT = (process.env || 4000).PORT;
 var connectDB_1 = require("./utils/connectDB");
 var cors_1 = __importDefault(require("cors"));
+var cookie_parser_1 = __importDefault(require("cookie-parser"));
 var authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 var app = (0, express_1.default)();
 // middleware
@@ -19,6 +20,7 @@ app.use((0, cors_1.default)({
     methods: ['GET', 'POST', 'UPDATE', 'DELETE'],
     origin: '*',
 }));
+app.use((0, cookie_parser_1.default)());
 app.listen(PORT, function () {
     (0, connectDB_1.connectDB)();
     console.log("Server is running on port http://localhost:".concat(PORT));

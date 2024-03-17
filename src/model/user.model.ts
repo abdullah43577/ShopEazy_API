@@ -16,8 +16,8 @@ interface IUser {
   profileImg?: string;
   wishlists: ICartItem[];
   cartItems: ICartItem[];
-  resetToken?: string;
-  resetTokenExpires?: Date;
+  resetToken?: string | undefined;
+  resetTokenExpires?: Date | undefined;
 }
 
 const userSchema = new Schema<IUser>({
@@ -81,12 +81,10 @@ const userSchema = new Schema<IUser>({
 
   resetToken: {
     type: String,
-    default: null,
   },
 
   resetTokenExpires: {
     type: Date,
-    default: null,
   },
 });
 
