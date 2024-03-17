@@ -41,14 +41,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.connectDB = void 0;
 require("dotenv/config");
-var DB_PASSWORD = process.env.DB_PASSWORD;
+var DB = process.env.DB;
 var mongoose_1 = __importDefault(require("mongoose"));
 var connectDB = function () { return __awaiter(void 0, void 0, void 0, function () {
     var dbURI, err_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                dbURI = "mongodb+srv://officialayo540:".concat(DB_PASSWORD, "@quikchatcluster.wdvm6cm.mongodb.net/quikChatDB");
+                dbURI = DB;
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 3, , 4]);

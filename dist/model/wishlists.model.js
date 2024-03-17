@@ -5,5 +5,5 @@ var wishlistsModel = new mongoose_1.Schema({
     wishlists: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Product' },
     quantity: Number,
 });
-var Wishlist = (0, mongoose_1.model)('Wishlist', wishlistsModel);
+var Wishlist = (0, mongoose_1.model)('wishlist', wishlistsModel);
 exports.default = Wishlist;

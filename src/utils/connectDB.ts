@@ -1,12 +1,12 @@
 import 'dotenv/config';
-const { DB_PASSWORD } = process.env;
+const { DB } = process.env;
 import mongoose from 'mongoose';
 
 export const connectDB = async () => {
-  const dbURI = `mongodb+srv://officialayo540:${DB_PASSWORD}@quikchatcluster.wdvm6cm.mongodb.net/quikChatDB`;
+  const dbURI = DB;
 
   try {
-    await mongoose.connect(dbURI);
+    await mongoose.connect(dbURI as string);
     console.log('Connected to MongoDB');
   } catch (err) {
     console.log('Error connecting to MongoDB', err);

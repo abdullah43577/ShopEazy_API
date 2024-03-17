@@ -5,5 +5,5 @@ var cartItems = new mongoose_1.Schema({
     cartItems: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Product' },
     quantity: Number,
 });
-var CartItem = (0, mongoose_1.model)('CartItem', cartItems);
+var CartItem = (0, mongoose_1.model)('cartItem', cartItems);
 exports.default = CartItem;

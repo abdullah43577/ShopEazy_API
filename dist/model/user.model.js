@@ -1,6 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var mongoose_1 = require("mongoose");
+var validator_1 = __importDefault(require("validator"));
 var userSchema = new mongoose_1.Schema({
     name: {
         type: String,
@@ -14,11 +18,18 @@ var userSchema = new mongoose_1.Schema({
         type: String,
         unique: true,
         required: true,
+        validate: {
+            validator: function (value) { return validator_1.default.isEmail(value); },
+            message: 'Please provide a valid email address',
+        },
     },
     password: {
         type: String,
-        minlength: 6,
         required: true,
+        validate: {
+            validator: function (value) { return validator_1.default.isLength(value, { min: 6 }); },
+            message: 'Password must be at least 6 characters long',
+        },
     },
     phone: {
         type: String,
@@ -26,9 +37,11 @@ var userSchema = new mongoose_1.Schema({
     },
     googleId: {
         type: String,
+        default: null,
     },
     profileImg: {
         type: String,
+        default: null,
     },
     wishlists: [
         {
@@ -42,6 +55,14 @@ var userSchema = new mongoose_1.Schema({
             ref: 'CartItem',
         },
     ],
+    resetToken: {
+        type: String,
+        default: null,
+    },
+    resetTokenExpires: {
+        type: Date,
+        default: null,
+    },
 });
-var User = (0, mongoose_1.model)('User', userSchema);
+var User = (0, mongoose_1.model)('user', userSchema);
 exports.default = User;

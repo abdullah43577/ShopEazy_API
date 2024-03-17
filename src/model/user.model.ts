@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import validator from 'validator';
 
 interface ICartItem {
   productId: number;
@@ -15,6 +16,8 @@ interface IUser {
   profileImg?: string;
   wishlists: ICartItem[];
   cartItems: ICartItem[];
+  resetToken?: string;
+  resetTokenExpires?: Date;
 }
 
 const userSchema = new Schema<IUser>({
@@ -32,12 +35,19 @@ const userSchema = new Schema<IUser>({
     type: String,
     unique: true,
     required: true,
+    validate: {
+      validator: (value: string) => validator.isEmail(value),
+      message: 'Please provide a valid email address',
+    },
   },
 
   password: {
     type: String,
-    minlength: 6,
     required: true,
+    validate: {
+      validator: (value: string) => validator.isLength(value, { min: 6 }),
+      message: 'Password must be at least 6 characters long',
+    },
   },
 
   phone: {
@@ -47,10 +57,12 @@ const userSchema = new Schema<IUser>({
 
   googleId: {
     type: String,
+    default: null,
   },
 
   profileImg: {
     type: String,
+    default: null,
   },
 
   wishlists: [
@@ -66,8 +78,18 @@ const userSchema = new Schema<IUser>({
       ref: 'CartItem',
     },
   ],
+
+  resetToken: {
+    type: String,
+    default: null,
+  },
+
+  resetTokenExpires: {
+    type: Date,
+    default: null,
+  },
 });
 
-const User = model<IUser>('User', userSchema);
+const User = model<IUser>('user', userSchema);
 
 export default User;

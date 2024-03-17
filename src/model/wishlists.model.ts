@@ -5,6 +5,6 @@ const wishlistsModel = new Schema({
   quantity: Number,
 });
 
-const Wishlist = model('Wishlist', wishlistsModel);
+const Wishlist = model('wishlist', wishlistsModel);
 
 export default Wishlist;

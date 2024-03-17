@@ -16,5 +16,5 @@ var productsModel = new mongoose_1.Schema({
     isAddedToCart: Boolean,
     quantity: Number,
 });
-var Product = (0, mongoose_1.model)('Product', productsModel);
+var Product = (0, mongoose_1.model)('product', productsModel);
 exports.default = Product;

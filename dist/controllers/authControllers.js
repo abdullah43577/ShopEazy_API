@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -39,13 +50,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.login = exports.updateProfile = exports.register = exports.test = void 0;
+exports.forgotPassword = exports.populateProducts = exports.login = exports.updateProfile = exports.register = exports.test = void 0;
 var user_model_1 = __importDefault(require("../model/user.model"));
 var generateToken_1 = require("../utils/generateToken");
 var hashPassword_1 = require("../utils/hashPassword");
 var mongoose_1 = require("mongoose");
 require("dotenv/config");
-var API_URL = process.env.API_URL;
+var STORE_API = process.env.STORE_API;
 var axios_1 = __importDefault(require("axios"));
 var products_model_1 = __importDefault(require("../model/products.model"));
 var test = function (req, res) {
@@ -53,38 +64,30 @@ var test = function (req, res) {
 };
 exports.test = test;
 var populateProducts = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var data, _i, data_1, product, productInstance, error_1;
+    var data, products, savedProducts, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 6, , 7]);
-                return [4 /*yield*/, axios_1.default.get(API_URL)];
+                _a.trys.push([0, 3, , 4]);
+                return [4 /*yield*/, axios_1.default.get(STORE_API)];
             case 1:
                 data = (_a.sent()).data;
-                _i = 0, data_1 = data;
-                _a.label = 2;
+                products = data.map(function (product) { return (__assign(__assign({}, product), { isAddedToWishlist: false, isAddedToCart: false, quantity: 1 })); });
+                return [4 /*yield*/, products_model_1.default.insertMany(products)];
             case 2:
-                if (!(_i < data_1.length)) return [3 /*break*/, 5];
-                product = data_1[_i];
-                productInstance = new products_model_1.default(product);
-                return [4 /*yield*/, productInstance.save()];
+                savedProducts = _a.sent();
+                res.status(200).json({ message: 'Products populated successfully!', data: savedProducts });
+                return [3 /*break*/, 4];
             case 3:
-                _a.sent();
-                _a.label = 4;
-            case 4:
-                _i++;
-                return [3 /*break*/, 2];
-            case 5:
-                res.sendStatus(200);
-                return [3 /*break*/, 7];
-            case 6:
                 error_1 = _a.sent();
-                res.sendStatus(404);
-                return [3 /*break*/, 7];
-            case 7: return [2 /*return*/];
+                console.log('Error populating products', error_1.message);
+                res.status(404).json({ message: 'Error populating products', error: error_1.message });
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
         }
     });
 }); };
+exports.populateProducts = populateProducts;
 var register = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var _a, name, email, password, existingUser, hashedPassword, newUser, token, err_1;
     return __generator(this, function (_b) {
@@ -107,7 +110,7 @@ var register = function (req, res) { return __awaiter(void 0, void 0, void 0, fu
                 newUser = _b.sent();
                 token = (0, generateToken_1.generatetoken)(newUser._id.toString());
                 res.cookie('shopEazyJWT', token, { httpOnly: true, secure: true, maxAge: 3600000 });
-                res.status(201).json({ message: 'Account Registration Successfull!', newUser: newUser });
+                res.status(201).json({ message: 'Account Registration Successful!', newUser: newUser });
                 return [3 /*break*/, 5];
             case 4:
                 err_1 = _b.sent();
@@ -147,34 +150,98 @@ var updateProfile = function (req, res) { return __awaiter(void 0, void 0, void 
 }); };
 exports.updateProfile = updateProfile;
 var login = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, username, password, user, passwordMatch, token, err_3;
+    var _a, usernameOrEmail, password, user, passwordMatch, token, err_3;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _b.trys.push([0, 3, , 4]);
-                _a = req.body, username = _a.username, password = _a.password;
-                if (!username || !password)
-                    return [2 /*return*/, res.status(400).json({ message: 'All fields are required!' })];
-                return [4 /*yield*/, user_model_1.default.findOne({ username: username })];
+                _b.trys.push([0, 6, , 7]);
+                _a = req.body, usernameOrEmail = _a.usernameOrEmail, password = _a.password;
+                if (!usernameOrEmail || !password)
+                    return [2 /*return*/, res.status(400).json({ message: 'Username or email and password are required!' })];
+                user = void 0;
+                if (!usernameOrEmail.includes('@')) return [3 /*break*/, 2];
+                return [4 /*yield*/, user_model_1.default.findOne({ email: usernameOrEmail })];
             case 1:
+                // check if username is provided
                 user = _b.sent();
+                return [3 /*break*/, 4];
+            case 2: return [4 /*yield*/, user_model_1.default.findOne({ username: usernameOrEmail })];
+            case 3:
+                // check if email was provided
+                user = _b.sent();
+                _b.label = 4;
+            case 4:
                 if (!user)
-                    return [2 /*return*/, res.status(400).json({ message: 'Invalid username or password!' })];
+                    return [2 /*return*/, res.status(400).json({ message: 'Invalid username or email or password!' })];
                 return [4 /*yield*/, (0, hashPassword_1.comparePassword)(password, user.password)];
-            case 2:
+            case 5:
                 passwordMatch = _b.sent();
                 if (!passwordMatch)
-                    return [2 /*return*/, res.status(400).json({ message: 'invalid username or password!' })];
+                    return [2 /*return*/, res.status(400).json({ message: 'invalid username or email or password!' })];
                 token = (0, generateToken_1.generatetoken)(user._id.toString());
                 res.cookie('shopEazyJWT', token, { httpOnly: true, secure: true, maxAge: 3600000 });
                 res.status(200).json({ message: 'User log in successfull!', user: user });
-                return [3 /*break*/, 4];
-            case 3:
+                return [3 /*break*/, 7];
+            case 6:
                 err_3 = _b.sent();
                 res.status(500).json({ message: 'Internal server error!', err: err_3.message });
-                return [3 /*break*/, 4];
-            case 4: return [2 /*return*/];
+                return [3 /*break*/, 7];
+            case 7: return [2 /*return*/];
         }
     });
 }); };
 exports.login = login;
+var forgotPassword = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var usernameOrEmail, user, resetToken, tokenExpiration, err_4;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 6, , 7]);
+                usernameOrEmail = req.body.usernameOrEmail;
+                if (!usernameOrEmail)
+                    return [2 /*return*/, res.sendStatus(404)];
+                user = void 0;
+                if (!usernameOrEmail.includes('@')) return [3 /*break*/, 2];
+                return [4 /*yield*/, user_model_1.default.findOne({ email: usernameOrEmail })];
+            case 1:
+                user = _a.sent();
+                return [3 /*break*/, 4];
+            case 2: return [4 /*yield*/, user_model_1.default.findOne({ username: usernameOrEmail })];
+            case 3:
+                user = _a.sent();
+                _a.label = 4;
+            case 4:
+                if (!user)
+                    return [2 /*return*/, res.status(404).json({ message: 'user with the associated email not registered!' })];
+                resetToken = crypto.randomUUID().toString();
+                tokenExpiration = new Date(Date.now() + 3600000);
+                user.resetToken = resetToken;
+                user.resetTokenExpires = tokenExpiration;
+                return [4 /*yield*/, user.save()];
+            case 5:
+                _a.sent();
+                res.status(200).json({ message: 'Password reset token generated and sent to the User!' });
+                return [3 /*break*/, 7];
+            case 6:
+                err_4 = _a.sent();
+                res.status(404).json({ message: 'An Error Occurred!!', error: err_4.message });
+                return [3 /*break*/, 7];
+            case 7: return [2 /*return*/];
+        }
+    });
+}); };
+exports.forgotPassword = forgotPassword;
+var resetPassword = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var newPassword;
+    return __generator(this, function (_a) {
+        try {
+            newPassword = req.body.newPassword;
+            if (!newPassword)
+                return [2 /*return*/, res.status(400).json({ message: 'New password is required!' })];
+        }
+        catch (err) {
+            res.status(404).json({ messag: 'Error resetting password', error: err.message });
+        }
+        return [2 /*return*/];
+    });
+}); };
