@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { test, register, updateProfile, login, populateProducts, forgotPassword, resetPassword } from '../controllers/authControllers';
+import { test, register, updateProfile, login, populateProducts, forgotPassword, resetPassword, getuser } from '../controllers/authControllers';
 import { validateToken } from '../utils/validateToken';
 
 const authRoutes = Router();
 
 authRoutes.get('/', test);
+authRoutes.get('/getuser/:id', getuser);
 authRoutes.post('/register', register);
 authRoutes.post('/login', login);
 authRoutes.post('/update-profile', validateToken, updateProfile);

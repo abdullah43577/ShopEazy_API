@@ -10,8 +10,29 @@ import Product from '../model/products.model';
 import { sendMail } from '../utils/sendMail';
 import validator from 'validator';
 
+interface UpdateFields {
+  name?: string;
+  username?: string;
+  email?: string;
+  password?: string;
+  phone?: string;
+  address?: string;
+}
+
 const test = (req: Request, res: Response) => {
   res.status(200).json({ message: 'Endpoint working successfully!' });
+};
+
+const getuser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'No user ID passed!' });
+
+    const user = await User.findById(id);
+    res.status(200).json({ message: 'Retrieved user successfully!', user });
+  } catch (err) {
+    res.status(404).json({ message: "Couldn't find user with associated ID" });
+  }
 };
 
 const populateProducts = async (req: Request, res: Response) => {
@@ -50,7 +71,7 @@ const register = async (req: Request, res: Response) => {
     const token = generatetoken(newUser._id.toString());
     res.cookie('shopEazyJWT', token, { httpOnly: true, secure: true, maxAge: 3600000 });
 
-    res.status(201).json({ message: 'Account Registration Successful!', newUser });
+    res.status(201).json({ message: 'Account Registration Successful!', newUser, token });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error!', err: (err as Error).message });
   }
@@ -58,18 +79,20 @@ const register = async (req: Request, res: Response) => {
 
 const updateProfile = async (req: Request, res: Response) => {
   try {
-    const { username, phone, profileImg } = req.body;
     const { id } = req.params;
+    const updateFields = req.body;
 
-    if (!username || !phone || !profileImg || !id) return res.status(400).json({ message: 'Missing property values for one or more dataset which may or may not include the ID property' });
+    if (!id) return res.status(404).json({ message: 'Missing ID!' });
 
     const user = await User.findById(id);
 
     if (!user || !isValidObjectId(id)) return res.status(400).json({ message: 'Invalid User ID!' });
 
-    user.username = username;
-    user.phone = phone;
-    user.profileImg = profileImg;
+    // Update the user object with the provided fields
+    for (const key in updateFields) {
+      user[key as keyof UpdateFields] = updateFields[key];
+    }
+
     await user.save();
 
     return res.status(200).json({ message: 'User profile updated successfully!', user });
@@ -105,7 +128,7 @@ const login = async (req: Request, res: Response) => {
     const token = generatetoken(user._id.toString());
     res.cookie('shopEazyJWT', token, { httpOnly: true, secure: true, maxAge: 3600000 });
 
-    res.status(200).json({ message: 'User log in successfull!', user });
+    res.status(200).json({ message: 'User log in successfull!', user, token });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error!', err: (err as Error).message });
   }
@@ -172,4 +195,4 @@ const resetPassword = async (req: Request, res: Response) => {
   }
 };
 
-export { test, register, updateProfile, login, populateProducts, forgotPassword, resetPassword };
+export { test, getuser, register, updateProfile, login, populateProducts, forgotPassword, resetPassword };

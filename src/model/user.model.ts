@@ -12,6 +12,7 @@ interface IUser {
   email: string;
   password: string;
   phone?: string;
+  address?: string;
   googleId?: string;
   profileImg?: string;
   wishlists: ICartItem[];
@@ -53,6 +54,10 @@ const userSchema = new Schema<IUser>({
   phone: {
     type: String,
     unique: true,
+  },
+
+  address: {
+    type: String,
   },
 
   googleId: {

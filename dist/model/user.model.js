@@ -35,6 +35,9 @@ var userSchema = new mongoose_1.Schema({
         type: String,
         unique: true,
     },
+    address: {
+        type: String,
+    },
     googleId: {
         type: String,
         default: null,

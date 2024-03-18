@@ -50,7 +50,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resetPassword = exports.forgotPassword = exports.populateProducts = exports.login = exports.updateProfile = exports.register = exports.test = void 0;
+exports.resetPassword = exports.forgotPassword = exports.populateProducts = exports.login = exports.updateProfile = exports.register = exports.getuser = exports.test = void 0;
 var user_model_1 = __importDefault(require("../model/user.model"));
 var generateToken_1 = require("../utils/generateToken");
 var hashPassword_1 = require("../utils/hashPassword");
@@ -65,6 +65,29 @@ var test = function (req, res) {
     res.status(200).json({ message: 'Endpoint working successfully!' });
 };
 exports.test = test;
+var getuser = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var id, user, err_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                id = req.params.id;
+                if (!id)
+                    return [2 /*return*/, res.status(400).json({ message: 'No user ID passed!' })];
+                return [4 /*yield*/, user_model_1.default.findById(id)];
+            case 1:
+                user = _a.sent();
+                res.status(200).json({ message: 'Retrieved user successfully!', user: user });
+                return [3 /*break*/, 3];
+            case 2:
+                err_1 = _a.sent();
+                res.status(404).json({ message: "Couldn't find user with associated ID" });
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getuser = getuser;
 var populateProducts = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var data, products, savedProducts, error_1;
     return __generator(this, function (_a) {
@@ -91,7 +114,7 @@ var populateProducts = function (req, res) { return __awaiter(void 0, void 0, vo
 }); };
 exports.populateProducts = populateProducts;
 var register = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, name, email, password, existingUser, hashedPassword, newUser, token, err_1;
+    var _a, name, email, password, existingUser, hashedPassword, newUser, token, err_2;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -112,11 +135,11 @@ var register = function (req, res) { return __awaiter(void 0, void 0, void 0, fu
                 newUser = _b.sent();
                 token = (0, generateToken_1.generatetoken)(newUser._id.toString());
                 res.cookie('shopEazyJWT', token, { httpOnly: true, secure: true, maxAge: 3600000 });
-                res.status(201).json({ message: 'Account Registration Successful!', newUser: newUser });
+                res.status(201).json({ message: 'Account Registration Successful!', newUser: newUser, token: token });
                 return [3 /*break*/, 5];
             case 4:
-                err_1 = _b.sent();
-                res.status(500).json({ message: 'Internal server error!', err: err_1.message });
+                err_2 = _b.sent();
+                res.status(500).json({ message: 'Internal server error!', err: err_2.message });
                 return [3 /*break*/, 5];
             case 5: return [2 /*return*/];
         }
@@ -124,30 +147,31 @@ var register = function (req, res) { return __awaiter(void 0, void 0, void 0, fu
 }); };
 exports.register = register;
 var updateProfile = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, username, phone, profileImg, id, user, err_2;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    var id, updateFields, user, key, err_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
-                _b.trys.push([0, 3, , 4]);
-                _a = req.body, username = _a.username, phone = _a.phone, profileImg = _a.profileImg;
+                _a.trys.push([0, 3, , 4]);
                 id = req.params.id;
-                if (!username || !phone || !profileImg || !id)
-                    return [2 /*return*/, res.status(400).json({ message: 'Missing property values for one or more dataset which may or may not include the ID property' })];
+                updateFields = req.body;
+                if (!id)
+                    return [2 /*return*/, res.status(404).json({ message: 'Missing ID!' })];
                 return [4 /*yield*/, user_model_1.default.findById(id)];
             case 1:
-                user = _b.sent();
+                user = _a.sent();
                 if (!user || !(0, mongoose_1.isValidObjectId)(id))
                     return [2 /*return*/, res.status(400).json({ message: 'Invalid User ID!' })];
-                user.username = username;
-                user.phone = phone;
-                user.profileImg = profileImg;
+                // Update the user object with the provided fields
+                for (key in updateFields) {
+                    user[key] = updateFields[key];
+                }
                 return [4 /*yield*/, user.save()];
             case 2:
-                _b.sent();
+                _a.sent();
                 return [2 /*return*/, res.status(200).json({ message: 'User profile updated successfully!', user: user })];
             case 3:
-                err_2 = _b.sent();
-                res.status(500).json({ message: 'Internal server error!', err: err_2.message });
+                err_3 = _a.sent();
+                res.status(500).json({ message: 'Internal server error!', err: err_3.message });
                 return [3 /*break*/, 4];
             case 4: return [2 /*return*/];
         }
@@ -155,7 +179,7 @@ var updateProfile = function (req, res) { return __awaiter(void 0, void 0, void 
 }); };
 exports.updateProfile = updateProfile;
 var login = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, usernameOrEmail, password, user, passwordMatch, token, err_3;
+    var _a, usernameOrEmail, password, user, passwordMatch, token, err_4;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -185,11 +209,11 @@ var login = function (req, res) { return __awaiter(void 0, void 0, void 0, funct
                     return [2 /*return*/, res.status(400).json({ message: 'invalid username or email or password!' })];
                 token = (0, generateToken_1.generatetoken)(user._id.toString());
                 res.cookie('shopEazyJWT', token, { httpOnly: true, secure: true, maxAge: 3600000 });
-                res.status(200).json({ message: 'User log in successfull!', user: user });
+                res.status(200).json({ message: 'User log in successfull!', user: user, token: token });
                 return [3 /*break*/, 7];
             case 6:
-                err_3 = _b.sent();
-                res.status(500).json({ message: 'Internal server error!', err: err_3.message });
+                err_4 = _b.sent();
+                res.status(500).json({ message: 'Internal server error!', err: err_4.message });
                 return [3 /*break*/, 7];
             case 7: return [2 /*return*/];
         }
@@ -197,7 +221,7 @@ var login = function (req, res) { return __awaiter(void 0, void 0, void 0, funct
 }); };
 exports.login = login;
 var forgotPassword = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var usernameOrEmail, user, resetToken, tokenExpiration, emailSent, err_4;
+    var usernameOrEmail, user, resetToken, tokenExpiration, emailSent, err_5;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -236,8 +260,8 @@ var forgotPassword = function (req, res) { return __awaiter(void 0, void 0, void
                 }
                 return [3 /*break*/, 8];
             case 7:
-                err_4 = _a.sent();
-                res.status(404).json({ message: 'An Error Occurred!!', error: err_4.message });
+                err_5 = _a.sent();
+                res.status(404).json({ message: 'An Error Occurred!!', error: err_5.message });
                 return [3 /*break*/, 8];
             case 8: return [2 /*return*/];
         }
@@ -245,7 +269,7 @@ var forgotPassword = function (req, res) { return __awaiter(void 0, void 0, void
 }); };
 exports.forgotPassword = forgotPassword;
 var resetPassword = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var resetToken, _a, email, newPassword, user, _b, err_5;
+    var resetToken, _a, email, newPassword, user, _b, err_6;
     return __generator(this, function (_c) {
         switch (_c.label) {
             case 0:
@@ -275,8 +299,8 @@ var resetPassword = function (req, res) { return __awaiter(void 0, void 0, void 
                 res.status(200).json({ message: 'Password reset successful!' });
                 return [3 /*break*/, 5];
             case 4:
-                err_5 = _c.sent();
-                res.status(404).json({ message: 'Error resetting password', error: err_5.message });
+                err_6 = _c.sent();
+                res.status(404).json({ message: 'Error resetting password', error: err_6.message });
                 return [3 /*break*/, 5];
             case 5: return [2 /*return*/];
         }

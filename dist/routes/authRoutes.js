@@ -5,6 +5,7 @@ var authControllers_1 = require("../controllers/authControllers");
 var validateToken_1 = require("../utils/validateToken");
 var authRoutes = (0, express_1.Router)();
 authRoutes.get('/', authControllers_1.test);
+authRoutes.get('/getuser/:id', authControllers_1.getuser);
 authRoutes.post('/register', authControllers_1.register);
 authRoutes.post('/login', authControllers_1.login);
 authRoutes.post('/update-profile', validateToken_1.validateToken, authControllers_1.updateProfile);
