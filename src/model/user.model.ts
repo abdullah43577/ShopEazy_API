@@ -1,8 +1,8 @@
-import { Schema, model } from 'mongoose';
+import { Schema, Types, model } from 'mongoose';
 import validator from 'validator';
 
 interface ICartItem {
-  productId: number;
+  productId: Types.ObjectId;
   quantity: number;
 }
 
@@ -70,19 +70,27 @@ const userSchema = new Schema<IUser>({
     default: null,
   },
 
-  wishlists: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Wishlist',
-    },
-  ],
+  wishlists: {
+    type: [
+      {
+        productId: { type: Types.ObjectId, ref: 'Product' },
+        quantity: Number,
+      },
+    ],
 
-  cartItems: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'CartItem',
-    },
-  ],
+    default: [],
+  },
+
+  cartItems: {
+    type: [
+      {
+        productId: { type: Types.ObjectId, ref: 'Product' },
+        quantity: Number,
+      },
+    ],
+
+    default: [],
+  },
 
   resetToken: {
     type: String,

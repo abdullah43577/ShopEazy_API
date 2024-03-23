@@ -12,4 +12,7 @@ authRoutes.post('/update-profile', validateToken_1.validateToken, authController
 authRoutes.post('/upload', authControllers_1.populateProducts);
 authRoutes.post('/forgot-password/:id', validateToken_1.validateToken, authControllers_1.forgotPassword);
 authRoutes.post('/reset-password/:resetToken', validateToken_1.validateToken, authControllers_1.resetPassword);
+authRoutes.post('/update-dispatch-items/:userId', validateToken_1.validateToken, authControllers_1.updateDispatchAction);
+authRoutes.get('/products', authControllers_1.getProducts);
+authRoutes.get('/products/:id', authControllers_1.getSingleProduct);
 exports.default = authRoutes;

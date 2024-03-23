@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import User from '../model/user.model';
 import { generatetoken } from '../utils/generateToken';
 import { comparePassword, hashPassword } from '../utils/hashPassword';
-import { isValidObjectId } from 'mongoose';
+import { isValidObjectId, Types } from 'mongoose';
 import 'dotenv/config';
 const { STORE_API } = process.env;
 import axios from 'axios';
@@ -38,12 +38,16 @@ const getuser = async (req: Request, res: Response) => {
 const populateProducts = async (req: Request, res: Response) => {
   try {
     const { data } = await axios.get(STORE_API as string);
-    const products = data.map((product: Record<any, any>) => ({
-      ...product,
-      isAddedToWishlist: false,
-      isAddedToCart: false,
-      quantity: 1,
-    }));
+    const products = data.map((product: Record<any, any>) => {
+      const { id, ...rest } = product;
+
+      return {
+        ...rest,
+        isAddedToWishlist: false,
+        isAddedToCart: false,
+        quantity: 1,
+      };
+    });
 
     const savedProducts = await Product.insertMany(products);
 
@@ -195,4 +199,60 @@ const resetPassword = async (req: Request, res: Response) => {
   }
 };
 
-export { test, getuser, register, updateProfile, login, populateProducts, forgotPassword, resetPassword };
+const updateDispatchAction = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { productId, stateType, productType } = req.body;
+
+    // ? find corresponding user
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // ? find corresponding product
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    // ? definition of types to work with
+    const updateType = stateType as 'wishlists' | 'cartItems';
+    const productProperty = productType as 'isAddedToWishlist' | 'isAddedToCart';
+
+    // ?  check if product already exist
+    const itemIndex = user[updateType].findIndex((obj) => obj.productId.equals(new Types.ObjectId(productId)));
+
+    // ? if product exist, remove it, else add it
+    if (itemIndex !== -1) {
+      user[updateType].splice(itemIndex, 1);
+      product[productProperty] = false;
+      await Promise.all([user.save(), product.save()]);
+      return res.status(204).json({ message: `Product removed from ${updateType} successfully!`, [updateType]: user[updateType] });
+    }
+
+    user[updateType].push({ productId, quantity: 1 });
+    product[productProperty] = true;
+    await Promise.all([user.save(), product.save()]);
+    res.status(200).json({ message: `Product added to ${updateType} successfully!`, [updateType]: user[updateType] });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal Server Error', err: (err as Error).message });
+  }
+};
+
+const getProducts = async (req: Request, res: Response) => {
+  try {
+    const products = await Product.find({});
+    res.status(200).json({ message: 'Product fetched successfully!', products });
+  } catch (err) {
+    res.status(400).json({ message: 'Error fetching products', err: (err as Error).message });
+  }
+};
+
+const getSingleProduct = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+    res.status(200).json({ message: 'Product retrieved successfully!', product });
+  } catch (err) {
+    res.status(400).json({ message: 'Error getting product', err: (err as Error).message });
+  }
+};
+
+export { test, getuser, register, updateProfile, login, populateProducts, forgotPassword, resetPassword, updateDispatchAction, getProducts, getSingleProduct };

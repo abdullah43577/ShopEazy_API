@@ -46,18 +46,24 @@ var userSchema = new mongoose_1.Schema({
         type: String,
         default: null,
     },
-    wishlists: [
-        {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'Wishlist',
-        },
-    ],
-    cartItems: [
-        {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'CartItem',
-        },
-    ],
+    wishlists: {
+        type: [
+            {
+                productId: { type: mongoose_1.Types.ObjectId, ref: 'Product' },
+                quantity: Number,
+            },
+        ],
+        default: [],
+    },
+    cartItems: {
+        type: [
+            {
+                productId: { type: mongoose_1.Types.ObjectId, ref: 'Product' },
+                quantity: Number,
+            },
+        ],
+        default: [],
+    },
     resetToken: {
         type: String,
     },

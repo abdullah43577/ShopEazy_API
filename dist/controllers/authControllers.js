@@ -46,11 +46,22 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resetPassword = exports.forgotPassword = exports.populateProducts = exports.login = exports.updateProfile = exports.register = exports.getuser = exports.test = void 0;
+exports.getSingleProduct = exports.getProducts = exports.updateDispatchAction = exports.resetPassword = exports.forgotPassword = exports.populateProducts = exports.login = exports.updateProfile = exports.register = exports.getuser = exports.test = void 0;
 var user_model_1 = __importDefault(require("../model/user.model"));
 var generateToken_1 = require("../utils/generateToken");
 var hashPassword_1 = require("../utils/hashPassword");
@@ -97,7 +108,10 @@ var populateProducts = function (req, res) { return __awaiter(void 0, void 0, vo
                 return [4 /*yield*/, axios_1.default.get(STORE_API)];
             case 1:
                 data = (_a.sent()).data;
-                products = data.map(function (product) { return (__assign(__assign({}, product), { isAddedToWishlist: false, isAddedToCart: false, quantity: 1 })); });
+                products = data.map(function (product) {
+                    var id = product.id, rest = __rest(product, ["id"]);
+                    return __assign(__assign({}, rest), { isAddedToWishlist: false, isAddedToCart: false, quantity: 1 });
+                });
                 return [4 /*yield*/, products_model_1.default.insertMany(products)];
             case 2:
                 savedProducts = _a.sent();
@@ -307,3 +321,90 @@ var resetPassword = function (req, res) { return __awaiter(void 0, void 0, void 
     });
 }); };
 exports.resetPassword = resetPassword;
+var updateDispatchAction = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var userId, _a, productId_1, stateType, productType, user, product, updateType, productProperty, itemIndex, err_7;
+    var _b, _c;
+    return __generator(this, function (_d) {
+        switch (_d.label) {
+            case 0:
+                _d.trys.push([0, 6, , 7]);
+                userId = req.params.userId;
+                _a = req.body, productId_1 = _a.productId, stateType = _a.stateType, productType = _a.productType;
+                return [4 /*yield*/, user_model_1.default.findById(userId)];
+            case 1:
+                user = _d.sent();
+                if (!user)
+                    return [2 /*return*/, res.status(404).json({ message: 'User not found' })];
+                return [4 /*yield*/, products_model_1.default.findById(productId_1)];
+            case 2:
+                product = _d.sent();
+                if (!product)
+                    return [2 /*return*/, res.status(404).json({ message: 'Product not found' })];
+                updateType = stateType;
+                productProperty = productType;
+                itemIndex = user[updateType].findIndex(function (obj) { return obj.productId.equals(new mongoose_1.Types.ObjectId(productId_1)); });
+                if (!(itemIndex !== -1)) return [3 /*break*/, 4];
+                user[updateType].splice(itemIndex, 1);
+                product[productProperty] = false;
+                return [4 /*yield*/, Promise.all([user.save(), product.save()])];
+            case 3:
+                _d.sent();
+                return [2 /*return*/, res.status(204).json((_b = { message: "Product removed from ".concat(updateType, " successfully!") }, _b[updateType] = user[updateType], _b))];
+            case 4:
+                user[updateType].push({ productId: productId_1, quantity: 1 });
+                product[productProperty] = true;
+                return [4 /*yield*/, Promise.all([user.save(), product.save()])];
+            case 5:
+                _d.sent();
+                res.status(200).json((_c = { message: "Product added to ".concat(updateType, " successfully!") }, _c[updateType] = user[updateType], _c));
+                return [3 /*break*/, 7];
+            case 6:
+                err_7 = _d.sent();
+                res.status(500).json({ message: 'Internal Server Error', err: err_7.message });
+                return [3 /*break*/, 7];
+            case 7: return [2 /*return*/];
+        }
+    });
+}); };
+exports.updateDispatchAction = updateDispatchAction;
+var getProducts = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var products, err_8;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, products_model_1.default.find({})];
+            case 1:
+                products = _a.sent();
+                res.status(200).json({ message: 'Product fetched successfully!', products: products });
+                return [3 /*break*/, 3];
+            case 2:
+                err_8 = _a.sent();
+                res.status(400).json({ message: 'Error fetching products', err: err_8.message });
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getProducts = getProducts;
+var getSingleProduct = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var id, product, err_9;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                id = req.params.id;
+                return [4 /*yield*/, products_model_1.default.findById(id)];
+            case 1:
+                product = _a.sent();
+                res.status(200).json({ message: 'Product retrieved successfully!', product: product });
+                return [3 /*break*/, 3];
+            case 2:
+                err_9 = _a.sent();
+                res.status(400).json({ message: 'Error getting product', err: err_9.message });
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getSingleProduct = getSingleProduct;
