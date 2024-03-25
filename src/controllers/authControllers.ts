@@ -224,7 +224,7 @@ const updateDispatchAction = async (req: Request, res: Response) => {
       user[updateType].splice(itemIndex, 1);
       product[productProperty] = false;
       await Promise.all([user.save(), product.save()]);
-      return res.status(204).json({ message: `Product removed from ${updateType} successfully!`, [updateType]: user[updateType] });
+      return res.status(200).json({ message: `Product removed from ${updateType} successfully!`, [updateType]: user[updateType], type: 'removal' });
     }
 
     user[updateType].push({ productId, quantity: 1 });
@@ -233,6 +233,44 @@ const updateDispatchAction = async (req: Request, res: Response) => {
     res.status(200).json({ message: `Product added to ${updateType} successfully!`, [updateType]: user[updateType] });
   } catch (err) {
     res.status(500).json({ message: 'Internal Server Error', err: (err as Error).message });
+  }
+};
+
+const getDispatchedActions = async (req: Request, res: Response) => {
+  try {
+    const { actionType, userId } = req.params;
+    if (!actionType || !userId) return res.status(404).json({ message: 'User ID &/or type not provided!' });
+
+    const referenceType = actionType as 'wishlists' | 'cartItems';
+
+    console.log(referenceType, typeof referenceType, 'referenceType');
+
+    const user = await User.findById(userId).populate(referenceType);
+    if (!user) return res.status(404).json({ message: 'User not found!' });
+
+    console.log('user', user);
+
+    res.status(200).json({ message: `${referenceType}, prefetched successfully!`, [referenceType]: user[referenceType] });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', err: (err as Error).message });
+  }
+};
+
+const dispatchFilter = async (req: Request, res: Response) => {
+  try {
+    const { filterType } = req.params;
+    if (!filterType) return res.status(404).json({ message: 'Filter type not provided!' });
+
+    const products = await Product.find({});
+
+    if (filterType === 'all') {
+      return res.status(200).json({ products });
+    }
+
+    const filteredProducts = products.filter((product) => product.category.toLowerCase() === filterType.toLowerCase());
+    res.status(200).json({ filteredProducts });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', err: (err as Error).message });
   }
 };
 
@@ -255,4 +293,4 @@ const getSingleProduct = async (req: Request, res: Response) => {
   }
 };
 
-export { test, getuser, register, updateProfile, login, populateProducts, forgotPassword, resetPassword, updateDispatchAction, getProducts, getSingleProduct };
+export { test, getuser, register, updateProfile, login, populateProducts, forgotPassword, resetPassword, updateDispatchAction, getProducts, getSingleProduct, getDispatchedActions, dispatchFilter };

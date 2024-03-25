@@ -61,7 +61,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSingleProduct = exports.getProducts = exports.updateDispatchAction = exports.resetPassword = exports.forgotPassword = exports.populateProducts = exports.login = exports.updateProfile = exports.register = exports.getuser = exports.test = void 0;
+exports.dispatchFilter = exports.getDispatchedActions = exports.getSingleProduct = exports.getProducts = exports.updateDispatchAction = exports.resetPassword = exports.forgotPassword = exports.populateProducts = exports.login = exports.updateProfile = exports.register = exports.getuser = exports.test = void 0;
 var user_model_1 = __importDefault(require("../model/user.model"));
 var generateToken_1 = require("../utils/generateToken");
 var hashPassword_1 = require("../utils/hashPassword");
@@ -349,7 +349,7 @@ var updateDispatchAction = function (req, res) { return __awaiter(void 0, void 0
                 return [4 /*yield*/, Promise.all([user.save(), product.save()])];
             case 3:
                 _d.sent();
-                return [2 /*return*/, res.status(204).json((_b = { message: "Product removed from ".concat(updateType, " successfully!") }, _b[updateType] = user[updateType], _b))];
+                return [2 /*return*/, res.status(200).json((_b = { message: "Product removed from ".concat(updateType, " successfully!") }, _b[updateType] = user[updateType], _b.type = 'removal', _b))];
             case 4:
                 user[updateType].push({ productId: productId_1, quantity: 1 });
                 product[productProperty] = true;
@@ -367,8 +367,64 @@ var updateDispatchAction = function (req, res) { return __awaiter(void 0, void 0
     });
 }); };
 exports.updateDispatchAction = updateDispatchAction;
+var getDispatchedActions = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var _a, actionType, userId, referenceType, user, err_8;
+    var _b;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
+            case 0:
+                _c.trys.push([0, 2, , 3]);
+                _a = req.params, actionType = _a.actionType, userId = _a.userId;
+                if (!actionType || !userId)
+                    return [2 /*return*/, res.status(404).json({ message: 'User ID &/or type not provided!' })];
+                referenceType = actionType;
+                console.log(referenceType, typeof referenceType, 'referenceType');
+                return [4 /*yield*/, user_model_1.default.findById(userId).populate(referenceType)];
+            case 1:
+                user = _c.sent();
+                if (!user)
+                    return [2 /*return*/, res.status(404).json({ message: 'User not found!' })];
+                console.log('user', user);
+                res.status(200).json((_b = { message: "".concat(referenceType, ", prefetched successfully!") }, _b[referenceType] = user[referenceType], _b));
+                return [3 /*break*/, 3];
+            case 2:
+                err_8 = _c.sent();
+                res.status(500).json({ message: 'Internal server error', err: err_8.message });
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getDispatchedActions = getDispatchedActions;
+var dispatchFilter = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var filterType_1, products, filteredProducts, err_9;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                filterType_1 = req.params.filterType;
+                if (!filterType_1)
+                    return [2 /*return*/, res.status(404).json({ message: 'Filter type not provided!' })];
+                return [4 /*yield*/, products_model_1.default.find({})];
+            case 1:
+                products = _a.sent();
+                if (filterType_1 === 'all') {
+                    return [2 /*return*/, res.status(200).json({ products: products })];
+                }
+                filteredProducts = products.filter(function (product) { return product.category.toLowerCase() === filterType_1.toLowerCase(); });
+                res.status(200).json({ filteredProducts: filteredProducts });
+                return [3 /*break*/, 3];
+            case 2:
+                err_9 = _a.sent();
+                res.status(500).json({ message: 'Internal server error', err: err_9.message });
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.dispatchFilter = dispatchFilter;
 var getProducts = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var products, err_8;
+    var products, err_10;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -379,8 +435,8 @@ var getProducts = function (req, res) { return __awaiter(void 0, void 0, void 0,
                 res.status(200).json({ message: 'Product fetched successfully!', products: products });
                 return [3 /*break*/, 3];
             case 2:
-                err_8 = _a.sent();
-                res.status(400).json({ message: 'Error fetching products', err: err_8.message });
+                err_10 = _a.sent();
+                res.status(400).json({ message: 'Error fetching products', err: err_10.message });
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
         }
@@ -388,7 +444,7 @@ var getProducts = function (req, res) { return __awaiter(void 0, void 0, void 0,
 }); };
 exports.getProducts = getProducts;
 var getSingleProduct = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var id, product, err_9;
+    var id, product, err_11;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -400,8 +456,8 @@ var getSingleProduct = function (req, res) { return __awaiter(void 0, void 0, vo
                 res.status(200).json({ message: 'Product retrieved successfully!', product: product });
                 return [3 /*break*/, 3];
             case 2:
-                err_9 = _a.sent();
-                res.status(400).json({ message: 'Error getting product', err: err_9.message });
+                err_11 = _a.sent();
+                res.status(400).json({ message: 'Error getting product', err: err_11.message });
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
         }

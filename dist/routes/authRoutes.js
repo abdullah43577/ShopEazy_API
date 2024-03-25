@@ -15,4 +15,6 @@ authRoutes.post('/reset-password/:resetToken', validateToken_1.validateToken, au
 authRoutes.post('/update-dispatch-items/:userId', validateToken_1.validateToken, authControllers_1.updateDispatchAction);
 authRoutes.get('/products', authControllers_1.getProducts);
 authRoutes.get('/products/:id', authControllers_1.getSingleProduct);
+authRoutes.get('/products/filter/:filterType', authControllers_1.dispatchFilter);
+authRoutes.get('/get_actions/:actionType/:userId', authControllers_1.getDispatchedActions);
 exports.default = authRoutes;

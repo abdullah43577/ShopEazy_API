@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { test, register, updateProfile, login, populateProducts, forgotPassword, resetPassword, getuser, updateDispatchAction, getProducts, getSingleProduct } from '../controllers/authControllers';
+import { test, register, updateProfile, login, populateProducts, forgotPassword, resetPassword, getuser, updateDispatchAction, getProducts, getSingleProduct, dispatchFilter, getDispatchedActions } from '../controllers/authControllers';
 import { validateToken } from '../utils/validateToken';
 
 const authRoutes = Router();
@@ -15,5 +15,7 @@ authRoutes.post('/reset-password/:resetToken', validateToken, resetPassword);
 authRoutes.post('/update-dispatch-items/:userId', validateToken, updateDispatchAction);
 authRoutes.get('/products', getProducts);
 authRoutes.get('/products/:id', getSingleProduct);
+authRoutes.get('/products/filter/:filterType', dispatchFilter);
+authRoutes.get('/get_actions/:actionType/:userId', getDispatchedActions);
 
 export default authRoutes;

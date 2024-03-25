@@ -45,6 +45,7 @@ const userSchema = new Schema<IUser>({
   password: {
     type: String,
     required: true,
+
     validate: {
       validator: (value: string) => validator.isLength(value, { min: 6 }),
       message: 'Password must be at least 6 characters long',
